@@ -1,0 +1,57 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: mrjazanov-338247
+  name: lab0-jupyter
+  labels:
+    jupyter: lab0
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      jupyter: lab0
+  template:
+      metadata:
+        labels:
+           jupyter: lab0
+      spec:
+        volumes:
+          - name: lab0-jupyter-cm
+            configMap:
+              name: lab0-jupyter-cm
+        serviceAccountName: spark
+        containers:
+          - name: jupyter
+            image: node03.st:5000/pyspark-hdfs-jupyter:mrjazanov-338247
+            imagePullPolicy: Always
+            resources:
+              requests:
+                memory: "2Gi"
+                cpu: "1"
+              limits:
+                memory: "2Gi"
+                cpu: "1"
+            ports:
+             - containerPort: 8282
+            command: [ "start-notebook.sh" ]
+            args: [ "--NotebookApp.token='6TGFWHEOeX'", "NotebookApp.port=8282"]
+            volumeMounts:
+               - mountPath: "/home/jovyan/.jupyter/jupyter_notebook_config.py"
+                 name: lab0-jupyter-cm
+                 readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lab0-jupyter-service
+  namespace: mrjazanov-338247
+  labels:
+    jupyter: lab0
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 8282
+  selector:
+    jupyter: lab0
